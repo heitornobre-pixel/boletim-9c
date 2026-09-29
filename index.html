@@ -1,1 +1,73 @@
 meu boletim
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Garante que a página funcione bem em celular -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boletim Digital</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- CABEÇALHO -->
+  <header class="cabecalho">
+    <h1>Boletim Digital</h1>
+    <p class="subtitulo">9º Ano — Estudante Exemplo</p>
+  </header>
+
+  <!-- CARDS DE RESUMO -->
+  <section class="cards-resumo">
+    <div class="card">
+      <span class="card-emoji">📊</span>
+      <span class="card-titulo">Média Geral</span>
+      <span class="card-valor" id="media-geral">—</span>
+    </div>
+
+    <div class="card">
+      <span class="card-emoji">🚫</span>
+      <span class="card-titulo">Total de Faltas</span>
+      <span class="card-valor" id="total-faltas">—</span>
+    </div>
+
+    <div class="card">
+      <span class="card-emoji">✅</span>
+      <span class="card-titulo">Bom Desempenho</span>
+      <span class="card-valor" id="total-bom">—</span>
+    </div>
+
+    <div class="card">
+      <span class="card-emoji">⚠️</span>
+      <span class="card-titulo">Precisam de Atenção</span>
+      <span class="card-valor" id="total-atencao">—</span>
+    </div>
+
+    <div class="card">
+      <span class="card-emoji">📅</span>
+      <span class="card-titulo">Frequência</span>
+      <span class="card-valor" id="frequencia">—</span>
+    </div>
+  </section>
+
+  <!-- TABELA DE NOTAS -->
+  <section class="area-tabela">
+    <table class="tabela-boletim">
+      <thead>
+        <tr>
+          <th>Disciplina</th>
+          <th>1º Tri</th>
+          <th>2º Tri</th>
+          <th>3º Tri</th>
+          <th>Média</th>
+          <th>Faltas</th>
+          <th>Situação</th>
+        </tr>
+      </thead>
+      <!-- O JavaScript vai preencher o corpo da tabela automaticamente -->
+      <tbody id="corpo-tabela"></tbody>
+    </table>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>

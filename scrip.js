@@ -182,3 +182,4 @@ document.getElementById("total-atencao").textContent = qtdAtencao;
    a partir das faltas. No futuro, será tratado de outra forma. */
 const frequenciaDemo = 92;
 document.getElementById("frequencia").textContent = `${frequenciaDemo}% (Frequência adequada)`;
+

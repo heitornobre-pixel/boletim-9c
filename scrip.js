@@ -174,3 +174,4 @@ document.getElementById("total-atencao").textContent = qtdAtencao;
 const frequenciaDemo = 92;
 document.getElementById("frequencia").textContent =
   frequenciaDemo + "% (Frequência adequada)";
+  

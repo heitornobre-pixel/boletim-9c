@@ -15,57 +15,96 @@
     <p class="subtitulo">9º Ano — Estudante Exemplo</p>
   </header>
 
-  <!-- CARDS DE RESUMO -->
-  <section class="cards-resumo">
-    <div class="card">
-      <span class="card-emoji">📊</span>
-      <span class="card-titulo">Média Geral</span>
-      <span class="card-valor" id="media-geral">—</span>
-    </div>
+  <!-- ÁREA DE ACESSO VIA PIN -->
+  <section class="area-pin" id="area-pin">
+    <div class="card-pin">
+      <h2>Acesso ao Boletim</h2>
+      <p class="info-estudante">Turma: <strong>9C</strong> | Chamada: <strong>14</strong></p>
+      
+      <div class="campo-pin">
+        <label for="input-pin">Digite seu PIN:</label>
+        <input type="password" id="input-pin" maxlength="10" placeholder="••••" />
+        <button id="btn-entrar" type="button">Entrar</button>
+      </div>
 
-    <div class="card">
-      <span class="card-emoji">🚫</span>
-      <span class="card-titulo">Total de Faltas</span>
-      <span class="card-valor" id="total-faltas">—</span>
-    </div>
-
-    <div class="card">
-      <span class="card-emoji">✅</span>
-      <span class="card-titulo">Bom Desempenho</span>
-      <span class="card-valor" id="total-bom">—</span>
-    </div>
-
-    <div class="card">
-      <span class="card-emoji">⚠️</span>
-      <span class="card-titulo">Precisam de Atenção</span>
-      <span class="card-valor" id="total-atencao">—</span>
-    </div>
-
-    <div class="card">
-      <span class="card-emoji">📅</span>
-      <span class="card-titulo">Frequência</span>
-      <span class="card-valor" id="frequencia">—</span>
+      <p id="msg-pin" class="msg-status"></p>
     </div>
   </section>
 
-  <!-- TABELA DE NOTAS -->
-  <section class="area-tabela">
-    <table class="tabela-boletim">
-      <thead>
-        <tr>
-          <th>Disciplina</th>
-          <th>1º Tri</th>
-          <th>2º Tri</th>
-          <th>3º Tri</th>
-          <th>Média</th>
-          <th>Faltas</th>
-          <th>Situação</th>
-        </tr>
-      </thead>
-      <!-- O JavaScript preenche este corpo automaticamente -->
-      <tbody id="corpo-tabela"></tbody>
-    </table>
-  </section>
+  <!-- CONTEÚDO DO BOLETIM (OCULTO ANTES DO LOGIN) -->
+  <div id="conteudo-boletim" style="display: none;">
+
+    <!-- PAINEL DE AÇÕES -->
+    <section class="painel-acoes">
+      <button id="btn-alterar-dados" class="btn-acao" type="button">Alterar dados</button>
+      <span id="msg-salvar" class="msg-status"></span>
+    </section>
+
+    <!-- CARDS DE RESUMO -->
+    <section class="cards-resumo">
+      <div class="card">
+        <span class="card-emoji">📊</span>
+        <span class="card-titulo">Média Geral</span>
+        <span class="card-valor" id="media-geral">—</span>
+      </div>
+
+      <div class="card">
+        <span class="card-emoji">🚫</span>
+        <span class="card-titulo">Total de Faltas</span>
+        <span class="card-valor" id="total-faltas">—</span>
+      </div>
+
+      <div class="card">
+        <span class="card-emoji">✅</span>
+        <span class="card-titulo">Bom Desempenho</span>
+        <span class="card-valor" id="total-bom">—</span>
+      </div>
+
+      <div class="card">
+        <span class="card-emoji">⚠️</span>
+        <span class="card-titulo">Precisam de Atenção</span>
+        <span class="card-valor" id="total-atencao">—</span>
+      </div>
+
+      <div class="card">
+        <span class="card-emoji">📅</span>
+        <span class="card-titulo">Frequência</span>
+        <span class="card-valor" id="frequencia">—</span>
+      </div>
+    </section>
+
+    <!-- TABELA DE NOTAS -->
+    <section class="area-tabela">
+      <table class="tabela-boletim">
+        <thead>
+          <tr>
+            <th>Disciplina</th>
+            <th>1º Tri</th>
+            <th>2º Tri</th>
+            <th>3º Tri</th>
+            <th>Média</th>
+            <th>Faltas</th>
+            <th>Situação</th>
+          </tr>
+        </thead>
+        <!-- O JavaScript preenche este corpo automaticamente -->
+        <tbody id="corpo-tabela"></tbody>
+      </table>
+    </section>
+
+    <!-- FORMULÁRIO DE EDIÇÃO (OCULTO POR PADRÃO) -->
+    <section id="area-edicao" class="area-edicao" style="display: none;">
+      <h2>Editar Notas e Faltas</h2>
+      <form id="form-edicao">
+        <div id="container-campos-edicao"></div>
+        <div class="botoes-edicao">
+          <button id="btn-salvar-dados" class="btn-acao btn-salvar" type="button">Salvar alterações</button>
+          <button id="btn-cancelar-edicao" class="btn-acao btn-cancelar" type="button">Cancelar</button>
+        </div>
+      </form>
+    </section>
+
+  </div>
 
   <script src="script.js"></script>
 </body>

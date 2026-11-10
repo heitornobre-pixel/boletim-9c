@@ -33,4 +33,637 @@ const disciplinasLocais = [
 
 let dadosAtuais = [];
 
-/*
+/* ---------------------------------------------------------
+   INSTÂNCIAS DOS GRÁFICOS
+   --------------------------------------------------------- */
+let graficoMedias = null;
+let graficoEvolucao = null;
+let graficoFaltas = null;
+
+/* ---------------------------------------------------------
+   FUNÇÕES DE NORMALIZAÇÃO E CÁLCULO
+   --------------------------------------------------------- */
+function normalizarNota(valor) {
+  if (valor === null || valor === undefined || valor === "") {
+    return null;
+  }
+
+  if (typeof valor === "string") {
+    valor = valor.replace(",", ".");
+  }
+
+  const numero = Number(valor);
+  if (isNaN(numero)) {
+    return null;
+  }
+
+  if (numero >= 0 && numero <= 10) {
+    return numero;
+  }
+
+  if (numero > 10 && numero <= 100) {
+    return numero / 10;
+  }
+
+  return null;
+}
+
+function formatarNota(nota) {
+  if (nota === null) return "Ainda não lançada";
+  return nota.toFixed(1).replace(".", ",");
+}
+
+function calcularMedia(notas) {
+  const validas = notas.filter(function (n) {
+    return n !== null;
+  });
+
+  if (validas.length === 0) return null;
+
+  let soma = 0;
+  for (let i = 0; i < validas.length; i++) {
+    soma += validas[i];
+  }
+  return soma / validas.length;
+}
+
+function somarFaltas(lista) {
+  if (!Array.isArray(lista)) return 0;
+  let total = 0;
+  for (let i = 0; i < lista.length; i++) {
+    const f = Number(lista[i]);
+    if (!isNaN(f)) total += f;
+  }
+  return total;
+}
+
+function definirSituacao(media) {
+  if (media === null) return "Nota ainda não disponível";
+  if (media >= 6) return "Bom desempenho";
+  return "Atenção";
+}
+
+function classeDaSituacao(situacao) {
+  if (situacao === "Bom desempenho") return "situacao-bom";
+  if (situacao === "Atenção") return "situacao-atencao";
+  return "situacao-neutra";
+}
+
+/* ---------------------------------------------------------
+   RENDERIZAÇÃO DA TELA
+   --------------------------------------------------------- */
+function renderizarBoletim(listaDisciplinas) {
+  const corpoTabela = document.getElementById("corpo-tabela");
+  corpoTabela.innerHTML = "";
+
+  let somaMedias = 0;
+  let qtdMedias = 0;
+  let totalFaltasGeral = 0;
+  let qtdBom = 0;
+  let qtdAtencao = 0;
+
+  listaDisciplinas.forEach(function (d) {
+    const n1 = normalizarNota(d.tri1);
+    const n2 = normalizarNota(d.tri2);
+    const n3 = normalizarNota(d.tri3);
+
+    const media = calcularMedia([n1, n2, n3]);
+    const situacao = definirSituacao(media);
+    const faltasArray = Array.isArray(d.faltas) ? d.faltas : [d.falta_tri1 || 0, d.falta_tri2 || 0, d.falta_tri3 || 0];
+    const faltas = somarFaltas(faltasArray);
+
+    if (media !== null) {
+      somaMedias += media;
+      qtdMedias++;
+    }
+    totalFaltasGeral += faltas;
+    if (situacao === "Bom desempenho") qtdBom++;
+    if (situacao === "Atenção") qtdAtencao++;
+
+    const linha = document.createElement("tr");
+
+    const tdNome = document.createElement("td");
+    tdNome.textContent = d.disciplina;
+
+    const tdTri1 = document.createElement("td");
+    tdTri1.textContent = formatarNota(n1);
+
+    const tdTri2 = document.createElement("td");
+    tdTri2.textContent = formatarNota(n2);
+
+    const tdTri3 = document.createElement("td");
+    tdTri3.textContent = formatarNota(n3);
+
+    const tdMedia = document.createElement("td");
+    tdMedia.textContent = media !== null ? formatarNota(media) : "—";
+
+    const tdFaltas = document.createElement("td");
+    tdFaltas.textContent = faltas;
+
+    const tdSit = document.createElement("td");
+    tdSit.textContent = situacao;
+    tdSit.className = classeDaSituacao(situacao);
+
+    linha.appendChild(tdNome);
+    linha.appendChild(tdTri1);
+    linha.appendChild(tdTri2);
+    linha.appendChild(tdTri3);
+    linha.appendChild(tdMedia);
+    linha.appendChild(tdFaltas);
+    linha.appendChild(tdSit);
+
+    corpoTabela.appendChild(linha);
+  });
+
+  let mediaGeral = null;
+  if (qtdMedias > 0) {
+    mediaGeral = somaMedias / qtdMedias;
+  }
+
+  document.getElementById("media-geral").textContent =
+    mediaGeral !== null ? formatarNota(mediaGeral) : "—";
+
+  document.getElementById("total-faltas").textContent = totalFaltasGeral;
+  document.getElementById("total-bom").textContent = qtdBom;
+  document.getElementById("total-atencao").textContent = qtdAtencao;
+
+  const frequenciaDemo = 92;
+  document.getElementById("frequencia").textContent =
+    frequenciaDemo + "% (Frequência adequada)";
+}
+
+/* ---------------------------------------------------------
+   FUNÇÕES EXCLUSIVAS DOS GRÁFICOS (SOMENTE LEITURA)
+   --------------------------------------------------------- */
+function atualizarGraficoMedias() {
+  const canvas = document.getElementById("graficoMediasDisciplinas");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  if (graficoMedias) {
+    graficoMedias.destroy();
+  }
+
+  const rotulos = [];
+  const valores = [];
+
+  dadosAtuais.forEach(d => {
+    rotulos.push(d.disciplina);
+    const n1 = normalizarNota(d.tri1);
+    const n2 = normalizarNota(d.tri2);
+    const n3 = normalizarNota(d.tri3);
+    const m = calcularMedia([n1, n2, n3]);
+    valores.push(m);
+  });
+
+  const ctx = canvas.getContext("2d");
+  graficoMedias = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: rotulos,
+      datasets: [{
+        label: "Média",
+        data: valores,
+        backgroundColor: "#ff4d4d",
+        borderColor: "#d40000",
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          min: 0,
+          max: 10,
+          grid: { color: "#333333" },
+          ticks: { color: "#ffffff" }
+        },
+        y: {
+          grid: { color: "#222222" },
+          ticks: { color: "#ffffff", font: { size: 11 } }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const val = context.raw;
+              if (val === null || val === undefined) return "Sem nota";
+              return "Média: " + val.toFixed(1).replace(".", ",");
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function atualizarGraficoEvolucao() {
+  const canvas = document.getElementById("graficoEvolucaoTrimestres");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  if (graficoEvolucao) {
+    graficoEvolucao.destroy();
+  }
+
+  let somaTri1 = 0, qtdTri1 = 0;
+  let somaTri2 = 0, qtdTri2 = 0;
+  let somaTri3 = 0, qtdTri3 = 0;
+
+  dadosAtuais.forEach(d => {
+    const n1 = normalizarNota(d.tri1);
+    const n2 = normalizarNota(d.tri2);
+    const n3 = normalizarNota(d.tri3);
+
+    if (n1 !== null) { somaTri1 += n1; qtdTri1++; }
+    if (n2 !== null) { somaTri2 += n2; qtdTri2++; }
+    if (n3 !== null) { somaTri3 += n3; qtdTri3++; }
+  });
+
+  const m1 = qtdTri1 > 0 ? (somaTri1 / qtdTri1) : null;
+  const m2 = qtdTri2 > 0 ? (somaTri2 / qtdTri2) : null;
+  const m3 = qtdTri3 > 0 ? (somaTri3 / qtdTri3) : null;
+
+  const ctx = canvas.getContext("2d");
+  graficoEvolucao = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: ["1º Tri", "2º Tri", "3º Tri"],
+      datasets: [{
+        label: "Média Geral",
+        data: [m1, m2, m3],
+        borderColor: "#4d94ff",
+        backgroundColor: "rgba(77, 148, 255, 0.15)",
+        fill: true,
+        tension: 0.3,
+        pointBackgroundColor: "#4d94ff",
+        pointRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          min: 0,
+          max: 10,
+          grid: { color: "#333333" },
+          ticks: { color: "#ffffff" }
+        },
+        x: {
+          grid: { color: "#222222" },
+          ticks: { color: "#ffffff" }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const val = context.raw;
+              if (val === null || val === undefined) return "Sem dados";
+              return "Média Geral: " + val.toFixed(1).replace(".", ",");
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function atualizarGraficoFaltas() {
+  const canvas = document.getElementById("graficoFaltasTrimestres");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  if (graficoFaltas) {
+    graficoFaltas.destroy();
+  }
+
+  let faltasTri1 = 0;
+  let faltasTri2 = 0;
+  let faltasTri3 = 0;
+
+  dadosAtuais.forEach(d => {
+    const arr = Array.isArray(d.faltas) ? d.faltas : [d.falta_tri1 || 0, d.falta_tri2 || 0, d.falta_tri3 || 0];
+    const f1 = Number(arr[0]) || 0;
+    const f2 = Number(arr[1]) || 0;
+    const f3 = Number(arr[2]) || 0;
+
+    faltasTri1 += f1;
+    faltasTri2 += f2;
+    faltasTri3 += f3;
+  });
+
+  const totalFaltasAcumulado = faltasTri1 + faltasTri2 + faltasTri3;
+  const divEstado = document.getElementById("estadoFaltas");
+  const cardFaltas = document.getElementById("card-grafico-faltas");
+
+  const REFERENCIA_INTERNA = 350;
+
+  if (totalFaltasAcumulado >= REFERENCIA_INTERNA) {
+    if (divEstado) divEstado.innerHTML = '<span class="badge-perigo">Perigo</span>';
+    if (cardFaltas) cardFaltas.classList.add("card-perigo");
+  } else {
+    if (divEstado) divEstado.innerHTML = "";
+    if (cardFaltas) cardFaltas.classList.remove("card-perigo");
+  }
+
+  const ctx = canvas.getContext("2d");
+  graficoFaltas = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["1º Tri", "2º Tri", "3º Tri"],
+      datasets: [{
+        label: "Faltas",
+        data: [faltasTri1, faltasTri2, faltasTri3],
+        backgroundColor: "#ff9900",
+        borderColor: "#cc7a00",
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: "#333333" },
+          ticks: { color: "#ffffff", stepSize: 1 }
+        },
+        x: {
+          grid: { color: "#222222" },
+          ticks: { color: "#ffffff" }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.raw + " faltas";
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function atualizarGraficos() {
+  atualizarGraficoMedias();
+  atualizarGraficoEvolucao();
+  atualizarGraficoFaltas();
+}
+
+/* ---------------------------------------------------------
+   CONEXÃO COM A API — ABRIR BOLETIM
+   --------------------------------------------------------- */
+async function abrirBoletim() {
+  const inputPin = document.getElementById("input-pin");
+  const msgPin = document.getElementById("msg-pin");
+  const pinDigitado = inputPin.value.trim();
+
+  if (!pinDigitado) {
+    msgPin.textContent = "Por favor, digite o PIN.";
+    msgPin.className = "msg-status msg-erro";
+    return;
+  }
+
+  msgPin.textContent = "Conectando...";
+  msgPin.className = "msg-status";
+
+  try {
+    const resposta = await fetch(`${CONFIG_ALUNO.apiUrl}/api/v1/boletins/abrir`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        turma: CONFIG_ALUNO.turma,
+        numero_chamada: CONFIG_ALUNO.numeroChamada,
+        pin: pinDigitado
+      })
+    });
+
+    if (resposta.status === 401) {
+      msgPin.textContent = "Turma, chamada ou PIN inválidos.";
+      msgPin.className = "msg-status msg-erro";
+      return;
+    }
+
+    if (resposta.status === 429) {
+      msgPin.textContent = "Muitas tentativas. Aguarde um minuto e tente novamente.";
+      msgPin.className = "msg-status msg-erro";
+      return;
+    }
+
+    if (!resposta.ok) {
+      msgPin.textContent = "Não foi possível conectar ao servidor. Tente novamente.";
+      msgPin.className = "msg-status msg-erro";
+      return;
+    }
+
+    const resultado = await resposta.json();
+    pinSessao = pinDigitado;
+    inputPin.value = "";
+
+    if (resultado.dados && Array.isArray(resultado.dados.disciplinas) && resultado.dados.disciplinas.length > 0) {
+      dadosAtuais = resultado.dados.disciplinas;
+    } else {
+      dadosAtuais = JSON.parse(JSON.stringify(disciplinasLocais));
+    }
+
+    renderizarBoletim(dadosAtuais);
+    atualizarGraficos();
+
+    document.getElementById("area-pin").style.display = "none";
+    document.getElementById("conteudo-boletim").style.display = "block";
+
+  } catch (erro) {
+    msgPin.textContent = "Não foi possível conectar ao servidor. Tente novamente.";
+    msgPin.className = "msg-status msg-erro";
+  }
+}
+
+/* ---------------------------------------------------------
+   SISTEMA DE EDIÇÃO E SALVAMENTO
+   --------------------------------------------------------- */
+function validarNotaDigitada(valor) {
+  if (valor === "" || valor === null || valor === undefined) return true;
+  const valStr = String(valor).replace(",", ".");
+  const num = Number(valStr);
+  if (isNaN(num)) return false;
+  return num >= 0 && num <= 10;
+}
+
+function validarFaltaDigitada(valor) {
+  if (valor === "" || valor === null || valor === undefined) return false;
+  const num = Number(valor);
+  return Number.isInteger(num) && num >= 0;
+}
+
+function parseNotaInput(valor) {
+  if (valor === "" || valor === null || valor === undefined) return null;
+  return Number(String(valor).replace(",", "."));
+}
+
+function abrirFormularioEdicao() {
+  const container = document.getElementById("container-campos-edicao");
+  container.innerHTML = "";
+
+  dadosAtuais.forEach((d, idx) => {
+    const item = document.createElement("div");
+    item.className = "grid-edicao-item";
+
+    const h3 = document.createElement("h3");
+    h3.textContent = d.disciplina;
+    item.appendChild(h3);
+
+    const linha = document.createElement("div");
+    linha.className = "campos-linha";
+
+    const n1 = normalizarNota(d.tri1);
+    const n2 = normalizarNota(d.tri2);
+    const n3 = normalizarNota(d.tri3);
+
+    const faltasArr = Array.isArray(d.faltas) ? d.faltas : [d.falta_tri1 || 0, d.falta_tri2 || 0, d.falta_tri3 || 0];
+
+    linha.innerHTML = `
+      <div class="campo-grupo">
+        <label>Nota 1º Tri</label>
+        <input type="text" id="edit-n1-${idx}" value="${n1 !== null ? n1 : ''}" />
+      </div>
+      <div class="campo-grupo">
+        <label>Nota 2º Tri</label>
+        <input type="text" id="edit-n2-${idx}" value="${n2 !== null ? n2 : ''}" />
+      </div>
+      <div class="campo-grupo">
+        <label>Nota 3º Tri</label>
+        <input type="text" id="edit-n3-${idx}" value="${n3 !== null ? n3 : ''}" />
+      </div>
+      <div class="campo-grupo">
+        <label>Faltas 1º Tri</label>
+        <input type="number" id="edit-f1-${idx}" value="${faltasArr[0] !== undefined ? faltasArr[0] : 0}" />
+      </div>
+      <div class="campo-grupo">
+        <label>Faltas 2º Tri</label>
+        <input type="number" id="edit-f2-${idx}" value="${faltasArr[1] !== undefined ? faltasArr[1] : 0}" />
+      </div>
+      <div class="campo-grupo">
+        <label>Faltas 3º Tri</label>
+        <input type="number" id="edit-f3-${idx}" value="${faltasArr[2] !== undefined ? faltasArr[2] : 0}" />
+      </div>
+    `;
+
+    item.appendChild(linha);
+    container.appendChild(item);
+  });
+
+  document.getElementById("area-edicao").style.display = "block";
+  document.getElementById("area-edicao").scrollIntoView({ behavior: 'smooth' });
+}
+
+async function salvarAlteracoes() {
+  const msgSalvar = document.getElementById("msg-salvar");
+  msgSalvar.textContent = "";
+
+  let temErro = false;
+  const novasDisciplinas = [];
+
+  for (let i = 0; i < dadosAtuais.length; i++) {
+    const inpN1 = document.getElementById(`edit-n1-${i}`);
+    const inpN2 = document.getElementById(`edit-n2-${i}`);
+    const inpN3 = document.getElementById(`edit-n3-${i}`);
+    const inpF1 = document.getElementById(`edit-f1-${i}`);
+    const inpF2 = document.getElementById(`edit-f2-${i}`);
+    const inpF3 = document.getElementById(`edit-f3-${i}`);
+
+    [inpN1, inpN2, inpN3, inpF1, inpF2, inpF3].forEach(el => el.classList.remove("campo-invalido"));
+
+    const valN1 = inpN1.value.trim();
+    const valN2 = inpN2.value.trim();
+    const valN3 = inpN3.value.trim();
+    const valF1 = inpF1.value.trim();
+    const valF2 = inpF2.value.trim();
+    const valF3 = inpF3.value.trim();
+
+    if (!validarNotaDigitada(valN1)) { inpN1.classList.add("campo-invalido"); temErro = true; }
+    if (!validarNotaDigitada(valN2)) { inpN2.classList.add("campo-invalido"); temErro = true; }
+    if (!validarNotaDigitada(valN3)) { inpN3.classList.add("campo-invalido"); temErro = true; }
+
+    if (!validarFaltaDigitada(valF1)) { inpF1.classList.add("campo-invalido"); temErro = true; }
+    if (!validarFaltaDigitada(valF2)) { inpF2.classList.add("campo-invalido"); temErro = true; }
+    if (!validarFaltaDigitada(valF3)) { inpF3.classList.add("campo-invalido"); temErro = true; }
+
+    if (!temErro) {
+      novasDisciplinas.push({
+        disciplina: dadosAtuais[i].disciplina,
+        tri1: parseNotaInput(valN1),
+        tri2: parseNotaInput(valN2),
+        tri3: parseNotaInput(valN3),
+        faltas: [Number(valF1), Number(valF2), Number(valF3)]
+      });
+    }
+  }
+
+  if (temErro) {
+    msgSalvar.textContent = "Corrija os campos destacados em vermelho.";
+    msgSalvar.className = "msg-status msg-erro";
+    return;
+  }
+
+  msgSalvar.textContent = "Salvando...";
+  msgSalvar.className = "msg-status";
+
+  try {
+    const resposta = await fetch(`${CONFIG_ALUNO.apiUrl}/api/v1/boletins/salvar`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        turma: CONFIG_ALUNO.turma,
+        numero_chamada: CONFIG_ALUNO.numeroChamada,
+        pin: pinSessao,
+        dados: {
+          disciplinas: novasDisciplinas
+        }
+      })
+    });
+
+    if (!resposta.ok) {
+      msgSalvar.textContent = "Erro ao salvar alterações no servidor.";
+      msgSalvar.className = "msg-status msg-erro";
+      return;
+    }
+
+    dadosAtuais = novasDisciplinas;
+    renderizarBoletim(dadosAtuais);
+    atualizarGraficos();
+
+    msgSalvar.textContent = "Dados salvos com sucesso.";
+    msgSalvar.className = "msg-status msg-sucesso";
+    document.getElementById("area-edicao").style.display = "none";
+
+  } catch (erro) {
+    msgSalvar.textContent = "Não foi possível conectar ao servidor. Tente novamente.";
+    msgSalvar.className = "msg-status msg-erro";
+  }
+}
+
+/* ---------------------------------------------------------
+   INICIALIZAÇÃO E EVENTOS
+   --------------------------------------------------------- */
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("btn-entrar").addEventListener("click", abrirBoletim);
+  document.getElementById("btn-alterar-dados").addEventListener("click", abrirFormularioEdicao);
+  document.getElementById("btn-salvar-dados").addEventListener("click", salvarAlteracoes);
+  document.getElementById("btn-cancelar-edicao").addEventListener("click", () => {
+    document.getElementById("area-edicao").style.display = "none";
+    document.getElementById("msg-salvar").textContent = "";
+  });
+
+  document.getElementById("input-pin").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") abrirBoletim();
+  });
+});

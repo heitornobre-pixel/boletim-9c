@@ -33,14 +33,4 @@ const disciplinasLocais = [
 
 let dadosAtuais = [];
 
-/* ---------------------------------------------------------
-   INSTÂNCIAS DOS GRÁFICOS
-   --------------------------------------------------------- */
-let graficoMedias = null;
-let graficoEvolucao = null;
-let graficoFaltas = null;
-
-/* ---------------------------------------------------------
-   FUNÇÕES DE NORMALIZAÇÃO E CÁLCULO
-   --------------------------------------------------------- */
-function normalizarNota(valor) {
+/*
